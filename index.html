@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetSage AI - Advanced Diagnostics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a; /* Sleek dark slate */
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #ec4899;
+            --accent: #14b8a6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 20%);
+            background-attachment: fixed;
+            overflow: hidden;
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-dark);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .login-input:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .nav-item {
+            padding: 1.1rem 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(99,102,241,0.2) 0%, transparent 100%);
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+        }
+
+        .logout-btn { margin-top: auto; color: var(--danger); }
+        .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: translateX(5px); }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2.5rem 3.5rem;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-card);
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+        
+        .user-profile:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.8rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card { display: flex; flex-direction: column; gap: 0.8rem; }
+        .stat-title { color: var(--text-muted); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .stat-value { font-size: 3.5rem; font-weight: 800; color: white; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.8rem;
+        }
+        
+        .chart-container { position: relative; height: 320px; width: 100%; }
+
+        /* Interactive Demo Section */
+        .demo-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2.5rem;
+        }
+
+        /* New Clean Terminal Styling */
+        .terminal-block {
+            background: #0f111a;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            transition: border-color 0.3s ease;
+        }
+        
+        .terminal-block:focus-within { border-color: var(--primary); }
+
+        .terminal-header {
+            background: #1e293b;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #0f111a;
+            gap: 8px;
+        }
+
+        .terminal-dots { display: flex; gap: 6px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot.red { background-color: #ff5f56; }
+        .dot.yellow { background-color: #ffbd2e; }
+        .dot.green { background-color: #27c93f; }
+        
+        .terminal-title {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .terminal-body {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #a6accd;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            padding: 16px;
+            resize: vertical;
+            min-height: 160px;
+            outline: none;
+        }
+        
+        .terminal-json {
+            color: #7ee787;
+            white-space: pre-wrap;
+            margin: 0;
+            padding: 16px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Forms & Buttons */
+        .input-group { margin-bottom: 1.2rem; }
+        .input-group label { display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus { 
+            border-color: var(--primary); 
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .input-field option { background: var(--bg-dark); }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .btn-glow {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .btn-glow:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px var(--primary-glow); 
+            background: linear-gradient(135deg, #818cf8, var(--primary));
+        }
+        .btn-glow:active { transform: translateY(0); }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-sm { padding: 0.9rem; font-size: 0.95rem; border-radius: 8px; font-weight: 600; }
+        .btn-accept { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); }
+        .btn-accept:hover { background: var(--success); color: white; transform: translateY(-2px); }
+        .btn-edit { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+        .btn-edit:hover { background: var(--warning); color: #000; transform: translateY(-2px); }
+        .btn-reject { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+        .btn-reject:hover { background: var(--danger); color: white; transform: translateY(-2px); }
+
+        /* Logs Table */
+        .log-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .log-table th, .log-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .log-table th { color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+        .log-table tr { transition: background 0.3s; }
+        .log-table tr:hover { background: rgba(255, 255, 255, 0.05); }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+        .badge-medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.5); }
+        .badge-high { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.5); }
+
+        .hidden { display: none !important; }
+        
+        /* Clean View Transitions */
+        .view-section {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            position: absolute;
+            top: 6.5rem; left: 3.5rem; right: 3.5rem;
+            pointer-events: none;
+        }
+        
+        .view-section.active-view {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+            top: 0; left: 0; right: 0;
+        }
+
+        /* Loading Animation */
+        .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 1.5rem; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite; }
+        .loading-text { color: var(--text-main); font-weight: 600; letter-spacing: 1px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Rule Checker Alert */
+        .rule-alert {
+            margin-top: 1.5rem; padding: 1.2rem; border-radius: 12px;
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            display: flex; gap: 1rem; align-items: flex-start;
+        }
+
+        .toast {
+            position: fixed; bottom: 30px; right: 30px; padding: 1.2rem 2.5rem;
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            color: white; border-radius: 12px; font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(100px);
+            opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fa-solid fa-network-wired"></i> NetSage AI
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Secure Engineering Portal</p>
+            
+            <form id="login-form">
+                <input type="text" id="engineer-id" class="login-input" placeholder="Engineer ID (e.g. admin)" required>
+                <input type="password" class="login-input" placeholder="Password" required>
+                <button type="submit" class="btn btn-glow" style="margin-top: 1rem;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Authenticate
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-network-wired"></i>
+            NetSage AI
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active" onclick="switchView('dashboard', this)">
+                <i class="fa-solid fa-chart-pie"></i> Analytics
+            </li>
+            <li class="nav-item" onclick="switchView('demo', this)">
+                <i class="fa-solid fa-microchip"></i> Diagnostics
+            </li>
+            <li class="nav-item" onclick="switchView('logs', this)">
+                <i class="fa-solid fa-shield-halved"></i> Review Logs
+            </li>
+            <li class="nav-item logout-btn" onclick="handleLogout()">
+                <i class="fa-solid fa-power-off"></i> Terminate Session
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <div>
+                <h2 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.5px;" id="page-title">Analytics Dashboard</h2>
+                <p style="color: var(--text-muted);">Cisco AI Internship Project</p>
+            </div>
+            <div class="user-profile">
+                <span style="font-weight: 600; font-size: 0.95rem;" id="user-display-name">Human Reviewer</span>
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="view-section active-view">
+            <div class="dashboard-grid">
+                <div class="glass-card stat-card">
+                    <span class="stat-title">Total Cases Analyzed</span>
+                    <span class="stat-value">142</span>
+                    <span style="color: var(--success); font-size: 0.85rem; margin-top: auto;">
+                        <i class="fa-solid fa-arrow-trend-up"></i> +12% this week
+                    </span>
+                </div>
+                <div class="glass-card stat-card">
+                    <span class="stat-title">AI Agreement Rate</span>
+                    <span class="stat-value">87%</span>
+                    <span style="color: var(--success); font-size: 0.85rem; margin-top: auto;">
+                        <i class="fa-solid fa-check-circle"></i> High accuracy
+                    </span>
+                </div>
+                <div class="glass-card stat-card">
+                    <span class="stat-title">Human Corrections</span>
+                    <span class="stat-value" style="color: var(--warning);">18</span>
+                    <span style="color: var(--text-muted); font-size: 0.85rem; margin-top: auto;">
+                        <i class="fa-solid fa-shield-halved"></i> Guardrails active
+                    </span>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem; font-weight: 700;">Issue Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="issueTypeChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem; font-weight: 700;">AI vs Human Review Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="agreementChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEMO VIEW -->
+        <div id="view-demo" class="view-section">
+            <div class="demo-layout">
+                <!-- Left Panel -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary);">
+                        <i class="fa-solid fa-ticket"></i> Support Ticket Data
+                    </h3>
+                    
+                    <select class="input-field" id="ticket-selector" onchange="loadTicket()" style="margin-bottom: 1.5rem;">
+                        <option value="custom">-- Create Custom Ticket (Paste your own data) --</option>
+                        <option value="vlan" selected>INC-1042: PC in VLAN 30 cannot reach server</option>
+                        <option value="dhcp">INC-1045: New devices failing to get IP addresses</option>
+                        <option value="routing">INC-1049: Branch A OSPF Adjacency Failure</option>
+                    </select>
+
+                    <div class="input-group">
+                        <label>Symptom & Topology Note</label>
+                        <input type="text" class="input-field" id="tkt-symptom" value="PC gets IP but cannot reach server in VLAN 30; gateway ping works. Core switch acting as L3 gateway.">
+                    </div>
+
+                    <div class="terminal-block">
+                        <div class="terminal-header">
+                            <div class="terminal-dots">
+                                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                            </div>
+                            <span class="terminal-title">Telemetry CLI (Paste config/show outputs here)</span>
+                        </div>
+                        <textarea class="terminal-body" id="tkt-code">CoreSwitch# show ip route
+C    192.168.10.0/24 is directly connected, Vlan10
+C    192.168.30.0/24 is directly connected, Vlan30
+
+CoreSwitch# show interfaces trunk
+Port        Mode         Encapsulation  Status        Native vlan
+Gi0/1       on           802.1q         trunking      1
+
+Port        Vlans allowed on trunk
+Gi0/1       1-29,31-4094</textarea>
+                    </div>
+
+                    <button class="btn btn-glow" id="btn-diagnose" onclick="runDiagnosis()">
+                        <i class="fa-solid fa-satellite-dish"></i> Synthesize Diagnosis
+                    </button>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--secondary);">
+                        <i class="fa-solid fa-microchip"></i> AI Analysis Engine
+                    </h3>
+
+                    <div id="ai-idle" style="text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-server" style="font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.4;"></i>
+                        <p>Provide ticket data on the left to initiate the analysis engine.</p>
+                    </div>
+
+                    <div id="ai-loading" class="loader hidden">
+                        <div class="spinner"></div>
+                        <div class="loading-text" id="loading-msg">Processing...</div>
+                    </div>
+
+                    <div id="ai-result" class="hidden">
+                        <div style="margin-bottom: 1.5rem;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Root Cause Analysis</span>
+                            <p style="font-size: 1.15rem; font-weight: 600; margin-top: 0.3rem;" id="res-cause"></p>
+                        </div>
+                        
+                        <div class="terminal-block">
+                            <div class="terminal-header">
+                                <div class="terminal-dots">
+                                    <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                                </div>
+                                <span class="terminal-title">AI Engine JSON Response</span>
+                            </div>
+                            <pre class="terminal-json" id="res-json"></pre>
+                        </div>
+
+                        <div id="rule-alert-box" class="rule-alert hidden">
+                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 1.2rem;"></i>
+                            <div>
+                                <strong style="display: block; margin-bottom: 0.3rem;">Deterministic Rule Violation</strong>
+                                <span style="font-size: 0.95rem; font-weight: 500;" id="rule-msg"></span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                            <h4 style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Human-in-the-loop Override</h4>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-accept" onclick="verifyFix('accept')"><i class="fa-solid fa-check"></i> Authorize</button>
+                                <button class="btn btn-sm btn-edit" onclick="verifyFix('edit')"><i class="fa-solid fa-pen-nib"></i> Modify & Commit</button>
+                                <button class="btn btn-sm btn-reject" onclick="verifyFix('reject')"><i class="fa-solid fa-ban"></i> Deny</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGS VIEW -->
+        <div id="view-logs" class="view-section">
+            <div class="glass-card">
+                <h3 style="margin-bottom: 1rem; color: var(--primary); font-size: 1.5rem;"><i class="fa-solid fa-clipboard-list"></i> Responsible AI Matrix Log</h3>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem;">Tracking model hallucinations and deterministic overrides to continuously refine the neural pathways.</p>
+                
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Case Signature</th>
+                            <th>Flawed AI Synthesis</th>
+                            <th>Human Override</th>
+                            <th>Action Taken</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>VLAN Config</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">PC cannot reach server</span></td>
+                            <td style="color: var(--danger);">Suggested `switchport trunk allowed vlan 30`</td>
+                            <td style="color: var(--success);">Added `add` keyword to prevent wiping other VLANs.</td>
+                            <td>Updated few-shot prompt with explicit `add` example.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DHCP Exhaustion</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">New devices get no IP</span></td>
+                            <td style="color: var(--danger);">Claimed DHCP service was disabled.</td>
+                            <td style="color: var(--success);">Noted `Free addresses: 0` in output. Root cause is pool exhaustion.</td>
+                            <td>Prompt rules updated to prioritize pool statistics.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OSPF Neighbor Failure</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">Branch A cannot reach B</span></td>
+                            <td style="color: var(--danger);">Guessed passive-interface.</td>
+                            <td style="color: var(--success);">Noticed /24 wildcard mismatch on a /30 p2p link.</td>
+                            <td>Added subnet math validation to Python Rule Checker.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DNS Resolution</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">Ping 8.8.8.8 works, URLs fail</span></td>
+                            <td style="color: var(--danger);">Hallucinated an ACL blocking port 53.</td>
+                            <td style="color: var(--success);">Found typo `8.8.9.8` in DHCP DNS server config.</td>
+                            <td>Added strong negative prompt against hallucinations.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wireless Guest VLAN</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">Guests get internal IPs</span></td>
+                            <td style="color: var(--danger);">Diagnosed wrong physical switchport access VLAN.</td>
+                            <td style="color: var(--success);">Identified WLC WLAN-to-Interface mapping was wrong.</td>
+                            <td>Added WLC specific examples to differentiate tunnels.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast">
+        <div id="toast-icon" style="font-size: 1.5rem;"></div>
+        <div id="toast-msg"></div>
+    </div>
+
+    <script>
+        // Data Store
+        const tickets = {
+            vlan: { symptom: "PC gets IP but cannot reach server in VLAN 30; gateway ping works. Core switch acting as L3 gateway.", code: `CoreSwitch# show ip route\nC    192.168.10.0/24 is directly connected, Vlan10\nC    192.168.30.0/24 is directly connected, Vlan30\n\nCoreSwitch# show interfaces trunk\nPort        Mode         Encapsulation  Status        Native vlan\nGi0/1       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nGi0/1       1-29,31-4094` },
+            dhcp: { symptom: "New devices failing to get IP addresses on wireless VLAN.", code: `Router# show ip dhcp pool GUEST_WIFI\nPool GUEST_WIFI :\n Utilization mark (high/low)    : 100 / 0\n Subnet size (first/next)       : 0 / 0 \n Total addresses                : 254\n Leased addresses               : 254\n Pending event                  : none` },
+            routing: { symptom: "Branch A cannot reach Branch B subnets.", code: `RouterA# show ip ospf neighbor\n\nRouterA# show run | section ospf\nrouter ospf 1\n network 10.1.1.1 0.0.0.255 area 0\n\nRouterA# show ip interface brief\nInterface              IP-Address      OK? Method Status                Protocol\nSerial0/0/0            10.1.1.1        YES manual up                    up` }
+        };
+
+        // Auth Flow
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('engineer-id').value;
+            document.getElementById('user-display-name').innerText = input;
+            
+            const overlay = document.getElementById('login-overlay');
+            const box = document.querySelector('.login-box');
+            
+            box.style.transform = 'translateY(-20px)';
+            box.style.opacity = '0';
+            overlay.style.opacity = '0';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                initCharts();
+            }, 500);
+        });
+
+        function handleLogout() {
+            const overlay = document.getElementById('login-overlay');
+            const box = document.querySelector('.login-box');
+            
+            overlay.style.display = 'flex';
+            
+            // Reset Box state for re-entry
+            box.style.transform = 'translateY(40px)';
+            
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                box.style.transform = 'translateY(0)';
+                box.style.opacity = '1';
+                switchView('dashboard', document.querySelector('.nav-item:first-child'));
+            }, 50);
+        }
+
+        const viewTitles = {
+            'dashboard': 'Analytics Dashboard',
+            'demo': 'Diagnostic Engine',
+            'logs': 'Neural Pathway Corrections'
+        };
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            document.getElementById('page-title').innerText = viewTitles[viewId] || 'Overview';
+
+            ['dashboard', 'demo', 'logs'].forEach(v => {
+                document.getElementById('view-' + v).classList.remove('active-view');
+            });
+            
+            setTimeout(() => {
+                document.getElementById('view-' + viewId).classList.add('active-view');
+            }, 50);
+        }
+
+        let chartsInitialized = false;
+        function initCharts() {
+            if(chartsInitialized) return;
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+
+            new Chart(document.getElementById('issueTypeChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['VLAN', 'Routing', 'DHCP', 'ACL', 'NAT', 'DNS', 'Wireless'],
+                    datasets: [{ data: [25, 20, 15, 15, 10, 10, 5], backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'], borderWidth: 0, hoverOffset: 10 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right' } } }
+            });
+
+            new Chart(document.getElementById('agreementChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [
+                        { label: 'Accepted as-is', data: [15, 22, 28, 35], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Human Corrected', data: [8, 5, 3, 2], backgroundColor: '#ec4899', borderRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid: {display:false} }, y: { stacked: true, grid: {color: 'rgba(255,255,255,0.05)'} } } }
+            });
+            chartsInitialized = true;
+        }
+
+        function loadTicket() {
+            const val = document.getElementById('ticket-selector').value;
+            if (val === 'custom') {
+                document.getElementById('tkt-symptom').value = "";
+                document.getElementById('tkt-code').value = "";
+            } else {
+                document.getElementById('tkt-symptom').value = tickets[val].symptom;
+                document.getElementById('tkt-code').value = tickets[val].code;
+            }
+            
+            document.getElementById('ai-result').classList.add('hidden');
+            document.getElementById('ai-idle').classList.remove('hidden');
+            const btn = document.getElementById('btn-diagnose');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Synthesize Diagnosis';
+        }
+
+        async function runDiagnosis() {
+            const btn = document.getElementById('btn-diagnose');
+            const symptom = document.getElementById('tkt-symptom').value;
+            const code = document.getElementById('tkt-code').value;
+
+            if (!code || code.trim() === '') {
+                alert("Please provide telemetry (show outputs) for the AI to analyze.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing...';
+            
+            document.getElementById('ai-idle').classList.add('hidden');
+            const loader = document.getElementById('ai-loading');
+            const msg = document.getElementById('loading-msg');
+            loader.classList.remove('hidden');
+            msg.innerText = "Transmitting to Python Backend...";
+            
+            try {
+                const apiResponse = await fetch('/api/diagnose', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symptom: symptom, telemetry: code })
+                });
+                
+                const data = await apiResponse.json();
+                
+                loader.classList.add('hidden');
+                
+                document.getElementById('res-cause').innerText = data.ai_diagnosis.root_cause;
+                document.getElementById('res-json').innerText = JSON.stringify(data.ai_diagnosis, null, 2);
+                
+                const alertBox = document.getElementById('rule-alert-box');
+                if (data.rule_checker_issues && data.rule_checker_issues.length > 0) {
+                    alertBox.classList.remove('hidden');
+                    document.getElementById('rule-msg').innerText = "Python Rule Checker: " + data.rule_checker_issues.join(" | ");
+                } else if (data.ai_diagnosis.fix_steps && data.ai_diagnosis.fix_steps.join(' ').includes("switchport trunk allowed vlan 30")) {
+                     alertBox.classList.remove('hidden');
+                     document.getElementById('rule-msg').innerText = "The proposed fix `switchport trunk allowed vlan 30` will OVERWRITE the entire allowed list. Syntax should be `vlan add 30`.";
+                } else {
+                    alertBox.classList.add('hidden');
+                }
+                
+                const resultBlock = document.getElementById('ai-result');
+                resultBlock.classList.remove('hidden');
+                
+                // Simple fade up
+                resultBlock.style.opacity = '0';
+                resultBlock.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    resultBlock.style.transition = 'all 0.4s ease';
+                    resultBlock.style.opacity = '1';
+                    resultBlock.style.transform = 'translateY(0)';
+                }, 50);
+                
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Scan Complete';
+            } catch (error) {
+                console.error("Backend Error:", error);
+                msg.innerText = "Error: Could not connect to Python backend. Ensure app.py is running.";
+                loader.querySelector('.spinner').style.borderColor = "var(--danger)";
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                btn.disabled = false;
+            }
+        }
+
+        function verifyFix(action) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            if(action === 'edit') {
+                toast.style.borderColor = 'var(--warning)';
+                toastIcon.innerHTML = '<i class="fa-solid fa-pen-nib" style="color: var(--warning);"></i>';
+                toastMsg.innerText = 'Trajectory modified by Human. Logged to neural net.';
+            } else if (action === 'accept') {
+                toast.style.borderColor = 'var(--success)';
+                toastIcon.innerHTML = '<i class="fa-solid fa-check" style="color: var(--success);"></i>';
+                toastMsg.innerText = 'AI Fix authorized and deployed to lab.';
+            } else {
+                toast.style.borderColor = 'var(--danger)';
+                toastIcon.innerHTML = '<i class="fa-solid fa-ban" style="color: var(--danger);"></i>';
+                toastMsg.innerText = 'Diagnosis denied. Escalating to Tier 3.';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                const btn = document.getElementById('btn-diagnose');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Synthesize Diagnosis';
+                document.getElementById('ai-result').classList.add('hidden');
+                document.getElementById('ai-idle').classList.remove('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
