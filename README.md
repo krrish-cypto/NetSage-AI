@@ -2,13 +2,7 @@
 **Project Title:** NetSage AI - Advanced Diagnostic Engine  
 **Domain:** Artificial Intelligence in Networking  
 
-### Student Details (Solo Project)
-- **Student Name:** [Enter Your Name Here]
-- **College Name:** [Enter Your College Name Here]
-- **AICTE ID:** [Enter Your AICTE ID Here]
-- **Stream/Branch:** [Enter Your Branch, e.g., B.Tech Computer Science]
 
----
 
 ## 1. Project Overview
 NetSage AI is an AI-assisted network troubleshooting application designed to bridge the gap between complex network telemetry and rapid incident resolution. The primary goal of this project was to build an intelligent assistant capable of analyzing raw CLI outputs (e.g., `show run`, `show ip route`) from simulated Packet Tracer environments, diagnosing the root cause, and suggesting deterministic fix steps—while keeping a human engineer firmly in the loop.
