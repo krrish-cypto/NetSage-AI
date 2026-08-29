@@ -6,6 +6,8 @@
     <title>NetSage AI - Advanced Diagnostics</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -480,9 +482,12 @@
                 <h2 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.5px;" id="page-title">Analytics Dashboard</h2>
                 <p style="color: var(--text-muted);">Cisco AI Internship Project</p>
             </div>
-            <div class="user-profile">
-                <span style="font-weight: 600; font-size: 0.95rem;" id="user-display-name">Human Reviewer</span>
-                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <input type="password" id="openai-key" class="input-field" placeholder="OpenAI API Key (Optional Live Mode)" style="padding: 0.6rem 1rem; width: 280px; margin: 0; font-size: 0.85rem;" autocomplete="off">
+                <div class="user-profile">
+                    <span style="font-weight: 600; font-size: 0.95rem;" id="user-display-name">Human Reviewer</span>
+                    <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                </div>
             </div>
         </header>
 
@@ -543,6 +548,9 @@
                         <option value="dhcp">INC-1045: New devices failing to get IP addresses</option>
                         <option value="routing">INC-1049: Branch A OSPF Adjacency Failure</option>
                     </select>
+                    
+                    <h4 style="color: var(--text-muted); margin-bottom: 0.8rem; font-size: 0.9rem; text-transform: uppercase;">Live Network Topology</h4>
+                    <div id="topology-network" style="width: 100%; height: 220px; background: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--border-color);"></div>
 
                     <div class="input-group">
                         <label>Symptom & Topology Note</label>
@@ -620,6 +628,7 @@ Gi0/1       1-29,31-4094</textarea>
                                 <button class="btn btn-sm btn-edit" onclick="verifyFix('edit')"><i class="fa-solid fa-pen-nib"></i> Modify & Commit</button>
                                 <button class="btn btn-sm btn-reject" onclick="verifyFix('reject')"><i class="fa-solid fa-ban"></i> Deny</button>
                             </div>
+                            <button class="btn btn-glow" onclick="downloadPDF()" style="margin-top: 1.5rem; padding: 0.9rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); box-shadow: none;"><i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> Export PDF Incident Report</button>
                         </div>
                     </div>
                 </div>
@@ -777,6 +786,35 @@ Gi0/1       1-29,31-4094</textarea>
             chartsInitialized = true;
         }
 
+        // Topology Initialization
+        let network = null;
+        function initTopology() {
+            const container = document.getElementById('topology-network');
+            const data = {
+                nodes: new vis.DataSet([
+                    { id: 1, label: 'Core Router', shape: 'image', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Cisco_Router_Icon.svg/512px-Cisco_Router_Icon.svg.png', size: 30, font: { color: '#f8fafc' } },
+                    { id: 2, label: 'Dist Switch', shape: 'image', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Cisco_Switch_Icon.svg/512px-Cisco_Switch_Icon.svg.png', size: 30, font: { color: '#f8fafc' } },
+                    { id: 3, label: 'VLAN 30 PC', shape: 'image', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cisco_PC_Icon.svg/512px-Cisco_PC_Icon.svg.png', size: 20, font: { color: '#f8fafc' } },
+                    { id: 4, label: 'DHCP Server', shape: 'image', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Cisco_Server_Icon.svg/512px-Cisco_Server_Icon.svg.png', size: 25, font: { color: '#f8fafc' } }
+                ]),
+                edges: new vis.DataSet([
+                    { id: 'e1', from: 1, to: 2, color: { color: '#10b981' }, width: 2 },
+                    { id: 'e2', from: 2, to: 3, color: { color: '#10b981' }, width: 2 },
+                    { id: 'e3', from: 2, to: 4, color: { color: '#10b981' }, width: 2 }
+                ])
+            };
+            const options = {
+                nodes: { font: { face: 'Outfit' } },
+                layout: { hierarchical: { direction: 'UD', nodeSpacing: 120, levelSeparation: 80 } },
+                physics: false
+            };
+            network = new vis.Network(container, data, options);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initTopology();
+        });
+
         function loadTicket() {
             const val = document.getElementById('ticket-selector').value;
             if (val === 'custom') {
@@ -785,6 +823,12 @@ Gi0/1       1-29,31-4094</textarea>
             } else {
                 document.getElementById('tkt-symptom').value = tickets[val].symptom;
                 document.getElementById('tkt-code').value = tickets[val].code;
+            }
+            
+            // Reset topology colors
+            if (network) {
+                const edges = network.body.data.edges;
+                edges.update([{id: 'e1', color: { color: '#10b981' }, width: 2}, {id: 'e2', color: { color: '#10b981' }, width: 2}, {id: 'e3', color: { color: '#10b981' }, width: 2}]);
             }
             
             document.getElementById('ai-result').classList.add('hidden');
@@ -798,6 +842,7 @@ Gi0/1       1-29,31-4094</textarea>
             const btn = document.getElementById('btn-diagnose');
             const symptom = document.getElementById('tkt-symptom').value;
             const code = document.getElementById('tkt-code').value;
+            const apiKey = document.getElementById('openai-key').value;
 
             if (!code || code.trim() === '') {
                 alert("Please provide telemetry (show outputs) for the AI to analyze.");
@@ -811,13 +856,13 @@ Gi0/1       1-29,31-4094</textarea>
             const loader = document.getElementById('ai-loading');
             const msg = document.getElementById('loading-msg');
             loader.classList.remove('hidden');
-            msg.innerText = "Transmitting to Python Backend...";
+            msg.innerText = apiKey ? "Transmitting to Live OpenAI Engine..." : "Transmitting to Python Backend...";
             
             try {
                 const apiResponse = await fetch('/api/diagnose', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ symptom: symptom, telemetry: code })
+                    body: JSON.stringify({ symptom: symptom, telemetry: code, api_key: apiKey })
                 });
                 
                 const data = await apiResponse.json();
@@ -840,6 +885,18 @@ Gi0/1       1-29,31-4094</textarea>
                 
                 const resultBlock = document.getElementById('ai-result');
                 resultBlock.classList.remove('hidden');
+                
+                // Highlight fault in topology
+                if (network) {
+                    const edges = network.body.data.edges;
+                    if (symptom.toLowerCase().includes("vlan 30") || symptom.toLowerCase().includes("dhcp")) {
+                        edges.update([{id: 'e2', color: { color: '#ef4444' }, width: 4}]);
+                    } else if (symptom.toLowerCase().includes("branch") || symptom.toLowerCase().includes("ospf")) {
+                         edges.update([{id: 'e1', color: { color: '#ef4444' }, width: 4}]);
+                    } else {
+                         edges.update([{id: 'e3', color: { color: '#ef4444' }, width: 4}]);
+                    }
+                }
                 
                 // Simple fade up
                 resultBlock.style.opacity = '0';
@@ -889,6 +946,28 @@ Gi0/1       1-29,31-4094</textarea>
                 document.getElementById('ai-result').classList.add('hidden');
                 document.getElementById('ai-idle').classList.remove('hidden');
             }, 3000);
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('ai-result');
+            const opt = {
+                margin:       0.5,
+                filename:     'NetSage_Incident_Report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            
+            // Add a temporary title for the PDF
+            const title = document.createElement('h2');
+            title.innerText = "NetSage AI - Automated Incident Report";
+            title.style.color = "#f8fafc";
+            title.style.marginBottom = "20px";
+            element.insertBefore(title, element.firstChild);
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.removeChild(title);
+            });
         }
     </script>
 </body>

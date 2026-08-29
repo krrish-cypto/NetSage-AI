@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 import os
 import re
+import json
+import urllib.request
 from rule_checker import RuleChecker
 
 app = Flask(__name__, static_folder='.')
@@ -14,21 +16,70 @@ def diagnose():
     data = request.json
     symptom = data.get('symptom', '')
     telemetry = data.get('telemetry', '')
+    api_key = data.get('api_key', '').strip()
 
     # 1. Run Python Rule Checker (Deterministic Validation)
-    # We parse the telemetry to build a mock network state for the rule checker
     network_state = parse_telemetry_for_rule_checker(telemetry)
     checker = RuleChecker()
     rule_issues = checker.run_checks(network_state)
 
-    # 2. Call AI LLM (This is where you would put your OpenAI/Gemini API key in a real production environment)
-    # Since we don't have your API key, we simulate the LLM response based on the prompt structure.
-    ai_response = simulate_llm_response(symptom, telemetry)
+    # 2. Call AI LLM
+    ai_response = None
+    if api_key:
+        print("Using Live OpenAI API Mode...")
+        ai_response = call_live_openai(symptom, telemetry, api_key)
+        
+    if not ai_response:
+        print("Using Simulation Mode...")
+        ai_response = simulate_llm_response(symptom, telemetry)
 
     return jsonify({
         "ai_diagnosis": ai_response,
         "rule_checker_issues": rule_issues
     })
+
+def call_live_openai(symptom, telemetry, api_key):
+    try:
+        # Read the prompt system message we engineered
+        with open('diagnose_prompt.md', 'r') as f:
+            system_prompt = f.read()
+
+        user_content = f"Symptom/Context:\n{symptom}\n\nTelemetry:\n{telemetry}\n\nDiagnose this."
+        
+        payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            "temperature": 0.1
+        }
+        
+        req = urllib.request.Request(
+            'https://api.openai.com/v1/chat/completions',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {api_key}'
+            }
+        )
+        
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            reply_text = result['choices'][0]['message']['content']
+            
+            # Extract JSON from markdown block if present
+            json_str = reply_text
+            if '```json' in reply_text:
+                json_str = reply_text.split('```json')[1].split('```')[0].strip()
+            elif '```' in reply_text:
+                json_str = reply_text.split('```')[1].split('```')[0].strip()
+                
+            return json.loads(json_str)
+            
+    except Exception as e:
+        print(f"OpenAI API Error: {e}")
+        return None
 
 def parse_telemetry_for_rule_checker(telemetry):
     """Parses raw CLI output into a structured state for rule_checker.py"""
