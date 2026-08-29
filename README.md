@@ -1,61 +1,115 @@
-# Cisco AI Internship Final Project Summary
-**Project Title:** NetSage AI - Advanced Diagnostic Engine  
-**Domain:** Artificial Intelligence in Networking  
+<div align="center">
 
+# NetSage AI - Advanced Diagnostic Engine
+**Cisco AI Internship Final Project**
 
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+<img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white" />
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" />
+<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" />
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
+<img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" />
 
-## 1. Project Overview
-NetSage AI is an AI-assisted network troubleshooting application designed to bridge the gap between complex network telemetry and rapid incident resolution. The primary goal of this project was to build an intelligent assistant capable of analyzing raw CLI outputs (e.g., `show run`, `show ip route`) from simulated Packet Tracer environments, diagnosing the root cause, and suggesting deterministic fix steps—while keeping a human engineer firmly in the loop.
+**Live Project URL:** [https://netsage-ai-ij6m.onrender.com](https://netsage-ai-ij6m.onrender.com)
 
-This project goes beyond simple scripts by delivering a **Full-Stack Web Application** that demonstrates how AI can be securely and professionally integrated into enterprise networking workflows.
-
----
-
-## 2. Core Architecture
-The application uses a decoupled, full-stack architecture to ensure scalability and safety:
-
-### A. The Frontend (Holographic Dashboard)
-- **Technology:** HTML5, Vanilla JavaScript, CSS3, Chart.js
-- **Features:** A professional, glassmorphism-themed UI featuring an Analytics Dashboard, an interactive Diagnostic Terminal, and an integrated Responsible AI Matrix Log.
-- **Functionality:** Engineers paste telemetry into the terminal, and the UI asynchronously communicates with the backend API to retrieve analysis without page reloads.
-
-### B. The Backend (Python Flask API)
-- **Technology:** Python, Flask (`app.py`)
-- **Features:** Acts as the secure middleware between the user interface and the AI engine. It parses incoming telemetry and manages the diagnostic pipeline.
-
-### C. The AI Engine & Prompt Engineering
-- **Technology:** Advanced Few-Shot Prompting (`diagnose_prompt.md`)
-- **Features:** The system uses a highly structured prompt library that forces the LLM to output strictly formatted JSON containing `root_cause`, `confidence`, `evidence`, `next_command`, and `fix_steps`. 
-
-### D. Deterministic Rule Checker (Safety Guardrails)
-- **Technology:** Python (`rule_checker.py`)
-- **Features:** Because LLMs can hallucinate, a deterministic Python script runs in parallel to the AI. It uses hard-coded logic to check for critical misconfigurations (e.g., wildcard mask mismatches, missing VLANs). If the AI makes a dangerous suggestion, the Rule Checker overrides it and warns the engineer.
+</div>
 
 ---
 
-## 3. Key Deliverables & Requirements Fulfilled
+## 📌 Project Overview
+NetSage AI is an enterprise-grade, AI-assisted network troubleshooting application designed to bridge the gap between complex network telemetry and rapid incident resolution. Built during the Cisco AI Internship, it uses Generative AI combined with deterministic Python guardrails to analyze raw Cisco CLI outputs, diagnose network faults, and provide human-in-the-loop (HITL) fix recommendations.
 
-### ✔️ 1. Dataset Generation (`cases.csv`)
-A Python script (`generate_cases.py`) was developed to synthesize a realistic dataset of 34 distinct network failure scenarios. The dataset covers Layer 1 to Layer 7 issues, including VLAN misconfigurations, DHCP exhaustion, OSPF adjacency failures, and DNS typos.
-
-### ✔️ 2. AI Troubleshooting Helper
-The core engine successfully parses raw text symptoms and CLI outputs, mapping them to known networking failure states and generating actionable remediation steps.
-
-### ✔️ 3. Responsible AI & Human-in-the-Loop
-An AI is only as good as its guardrails. The project features a strict Human-in-the-Loop workflow requiring engineers to "Authorize", "Modify", or "Deny" the AI's suggestions. Instances where the AI failed (e.g., suggesting a command that would wipe a VLAN trunk) were documented and integrated directly into the dashboard's **Responsible AI Matrix Log** for continuous model retraining.
-
-### ✔️ 4. Interactive Demonstration
-The final deliverable is not just code—it is a fully deployable, highly interactive demonstration that proves the viability of the AI assistant in a realistic Operations Center environment.
+## 🛠 Internship Tasks Accomplished
+1. **Identified AI Use Case:** Automated Network Troubleshooting.
+2. **LLM Prompt Engineering:** Designed complex prompts to force the AI to act as a deterministic Cisco CCIE engineer (`diagnose_prompt.md`).
+3. **Responsible AI & Guardrails:** Built `rule_checker.py` to fact-check AI outputs, preventing hallucinations in network fixes.
+4. **Dataset Creation:** Built `cases.csv` to map network symptoms to root causes and OSI layers.
+5. **Full-Stack Deployment:** Built a premium Glassmorphism UI with interactive topology maps, and deployed the Flask backend live to Render.
 
 ---
 
-## 4. How to Deploy and Test
-To run this project locally:
-1. Open a terminal in the project directory.
-2. Install dependencies: `pip install flask`
-3. Start the backend server: `python app.py`
-4. Open a web browser and navigate to: `http://localhost:5000`
-5. Authenticate with any Engineer ID to access the dashboard and initiate diagnostic scans.
+## ⚙️ Architecture Flow Diagram
+
+```mermaid
+graph TD
+    A[Human Network Engineer] -->|Inputs Telemetry & Symptom| B(NetSage AI Frontend)
+    B -->|POST Request| C{Flask Backend Server}
+    C -->|Validates via Python Rules| D[Deterministic Guardrails]
+    D -->|Injects Context| E[OpenAI LLM / Simulation Engine]
+    E -->|Returns Root Cause & Fix| C
+    C -->|Dynamic Response| B
+    B -->|Highlights Visual Topology & Generates PDF| A
+```
 
 ---
-*Report generated for Cisco AI Internship Evaluation.*
+
+## 📁 Folder Architecture
+
+```text
+NetSage-AI/
+├── app.py                     # Main Flask Backend Server
+├── index.html                 # Premium Glassmorphism Web Dashboard
+├── rule_checker.py            # Python Guardrails to prevent AI hallucinations
+├── diagnose_prompt.md         # Engineered System Prompt for the LLM
+├── requirements.txt           # Deployment Dependencies (Flask, gunicorn)
+├── prepare_submission.py      # Automated script for college folder submission
+├── Final_Submission_Ready/    # Formatted folders for TPO Evaluation
+│   ├── Dataset/
+│   ├── Evidence files/
+│   ├── Human Reviewer/
+│   ├── Python files - tools/
+│   └── Other project-related files/
+```
+
+---
+
+## 🚀 Beginner's Guide: How to Use This Project
+
+If you are new to networking or AI, follow this simple guide to see how the magic works!
+
+1. Open the Live URL: [https://netsage-ai-ij6m.onrender.com](https://netsage-ai-ij6m.onrender.com)
+2. On the **Login Screen**, type any name (e.g., "Admin") and hit Enter.
+3. On the **Sidebar (Left)**, click on the **"Diagnostics"** tab.
+4. Under **"Support Ticket Data"**, use the dropdown menu to select a broken network scenario (e.g., *INC-1042: PC in VLAN 30 cannot reach server*).
+5. You will see the CLI Telemetry (the raw code the router outputs) automatically populate.
+6. Click the glowing **Synthesize Diagnosis** button.
+7. **Watch the Magic:** 
+   - The interactive visual network map will **flash red** to show you exactly where the physical connection is broken.
+   - The AI Analysis Engine will spit out the Root Cause, the OSI Layer, and the exact commands to fix the router.
+   - Click **Export PDF Incident Report** to generate a professional support ticket!
+8. Click **Modify & Commit** to see how the system logs human interventions dynamically in the **Review Logs** tab!
+
+---
+
+## 🔑 OpenAI API Key (Live Mode)
+
+By default, the application runs in **Simulation Mode** (meaning it uses built-in smart logic to diagnose the provided tickets instantly without needing to pay for AI). 
+
+However, this project is fully integrated with **Live OpenAI Models**. 
+- **What is an API Key?** It is a secure password that allows this application to securely talk to ChatGPT's brain in real-time.
+- **How to use it:** If you have an OpenAI account with credits, generate an API key at `platform.openai.com`. Paste that key into the top-right box on the NetSage dashboard. The app will immediately switch from Simulation Mode to Live AI Mode and send the telemetry to a real neural network!
+
+---
+
+## 💻 How to Run Locally (For Developers)
+
+If you want to run the code on your own machine instead of the live link:
+
+1. Clone this repository.
+2. Ensure you have Python installed.
+3. Open a terminal in the folder and install requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Start the backend server:
+   ```bash
+   python app.py
+   ```
+5. Open your web browser and navigate to `http://localhost:5000`.
+
+---
+
+<div align="center">
+  <h3>Built by Krishna Dubey</h3>
+  <p>Cisco AI Virtual Internship</p>
+</div>
