@@ -926,6 +926,10 @@ Gi0/1       1-29,31-4094</textarea>
                 toast.style.borderColor = 'var(--warning)';
                 toastIcon.innerHTML = '<i class="fa-solid fa-pen-nib" style="color: var(--warning);"></i>';
                 toastMsg.innerText = 'Trajectory modified by Human. Logged to neural net.';
+                
+                // Add the dynamic log
+                addDynamicLog();
+                
             } else if (action === 'accept') {
                 toast.style.borderColor = 'var(--success)';
                 toastIcon.innerHTML = '<i class="fa-solid fa-check" style="color: var(--success);"></i>';
@@ -968,6 +972,34 @@ Gi0/1       1-29,31-4094</textarea>
             html2pdf().set(opt).from(element).save().then(() => {
                 element.removeChild(title);
             });
+        }
+
+        function addDynamicLog() {
+            const symptom = document.getElementById('tkt-symptom').value || "Unknown Symptom";
+            const cause = document.getElementById('res-cause').innerText || "Unknown Cause";
+            
+            const tbody = document.querySelector('.log-table tbody');
+            const newRow = document.createElement('tr');
+            
+            // Add a subtle highlight animation to the new row
+            newRow.style.animation = 'slideUp 0.5s ease-out forwards';
+            newRow.style.background = 'rgba(99, 102, 241, 0.15)'; 
+            
+            newRow.innerHTML = `
+                <td><strong>Session Override</strong><br><span style="color: var(--text-muted); font-size: 0.9rem;">${symptom.substring(0, 45)}...</span></td>
+                <td style="color: var(--danger);">${cause.substring(0, 50)}...</td>
+                <td style="color: var(--success);">Human engineer modified the AI's diagnostic trajectory.</td>
+                <td>Session weights dynamically adjusted for current user.</td>
+            `;
+            
+            // Insert at the top of the table
+            tbody.insertBefore(newRow, tbody.firstChild);
+            
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+                newRow.style.transition = 'background 1s ease';
+                newRow.style.background = 'transparent';
+            }, 3000);
         }
     </script>
 </body>
