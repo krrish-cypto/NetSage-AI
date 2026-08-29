@@ -163,11 +163,11 @@
         .logout-btn { margin-top: auto; color: var(--danger); }
         .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: translateX(5px); }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             padding: 2.5rem 3.5rem;
             overflow-y: auto;
+            overflow-x: hidden;
             height: 100vh;
         }
 
@@ -235,11 +235,11 @@
 
         .charts-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 1.8rem;
         }
         
-        .chart-container { position: relative; height: 320px; width: 100%; }
+        .chart-container { position: relative; height: 320px; width: 100%; min-width: 0; }
 
         /* Interactive Demo Section */
         .demo-layout {
@@ -432,6 +432,15 @@
             gap: 1rem;
         }
         .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* Responsive Design for Laptops */
+        @media (max-width: 1400px) {
+            .main-content { padding: 2rem; }
+            .demo-layout { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+            .charts-grid { grid-template-columns: 1fr; }
+            header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            header > div:last-child { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
